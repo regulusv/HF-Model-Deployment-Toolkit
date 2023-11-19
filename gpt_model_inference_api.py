@@ -1,34 +1,60 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer, GPT2Tokenizer, GPT2LMHeadModel
-from flask import Flask, request, jsonify
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextStreamer
+import json
+import torch
+# Use a pipeline as a high-level helper
+from transformers import pipeline
 
-# Hugging Face
-hf_token = "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"
+# Load model directly
+tokenizer = AutoTokenizer.from_pretrained("Trelis/Llama-2-7b-chat-hf-function-calling-v2")
+model = AutoModelForCausalLM.from_pretrained("Trelis/Llama-2-7b-chat-hf-function-calling-v2")
 
-app = Flask(__name__)
+def load_model():
+    # Load model and tokenizer with quantization for Llama 2
+    model_name = "Trelis/Llama-2-7b-chat-hf-function-calling-v2"
+    cache_dir = "/tmp/transformers_cache"
+    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir, use_fast=True) # will use the Rust fast tokenizer if available
 
-# load model and tokenizer
-model_name = "gpt2"
-tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-model = GPT2LMHeadModel.from_pretrained(model_name)
 
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    # get post from request
-    input_text = request.json.get("input_text", None)
-    if input_text is None:
-        return jsonify({"error": "No input text provided"}), 400
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        quantization_config=bnb_config,
+        device_map='auto',  # Adjust this based on your setup
+        trust_remote_code=True
+    )
 
-    # from input text to inference, generate response text
+    return model, tokenizer
+
+def generate_with_function(model, tokenizer, input_text):
+    # Define function metadata
+    search_bing_metadata = {
+        "function": "search_bing",
+        "description": "Search the web for content on Bing.",
+        "arguments": [
+            {"name": "query", "type": "string", "description": "The search query string"}
+        ]
+    }
+
+    functionList = json.dumps(search_bing_metadata, indent=4, separators=(',', ': '))
+
+    B_FUNC, E_FUNC = "<FUNCTIONS>", "</FUNCTIONS>\n\n"
+    B_INST, E_INST = "[INST]", "[/INST]"
+    
+    prompt = f"{B_FUNC}{functionList.strip()}{E_FUNC}{B_INST} {input_text.strip()} {E_INST}\n\n"
+    inputs = tokenizer([prompt], return_tensors="pt")
+
+    streamer = TextStreamer(tokenizer)
+    _ = model.generate(**inputs, streamer=streamer, max_new_tokens=500)
+    
+    return streamer.text.strip()
+
+def generate_without_function(model, tokenizer, input_text):
     inputs = tokenizer.encode(input_text, return_tensors="pt")
     outputs = model.generate(inputs, max_length=512)
-
-    # decode response text
-    response_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    # return response text
-    return jsonify({"response_text": response_text})
-
-
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=80)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)

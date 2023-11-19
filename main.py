@@ -1,16 +1,26 @@
-# This is a sample Python script.
+from flask import Flask, request, jsonify
+from gpt_model_inference_api import load_model, generate_with_function, generate_without_function
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+app = Flask(__name__)
+model, tokenizer = load_model()
 
+@app.route("/predict_with_function", methods=["POST"])
+def predict_with_function():
+    input_text = request.json.get("input_text", None)
+    if input_text is None:
+        return jsonify({"error": "No input text provided"}), 400
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+    response_text = generate_with_function(model, tokenizer, input_text)
+    return jsonify({"response_text": response_text})
 
+@app.route("/predict_without_function", methods=["POST"])
+def predict_without_function():
+    input_text = request.json.get("input_text", None)
+    if input_text is None:
+        return jsonify({"error": "No input text provided"}), 400
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+    response_text = generate_without_function(model, tokenizer, input_text)
+    return jsonify({"response_text": response_text})
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=80)
