@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from gpt_model_inference_api import load_model, generate_with_function, generate_without_function
+from model_inference_api import load_model, generate_with_function, generate_without_function
 
 app = Flask(__name__)
 model, tokenizer = load_model()
