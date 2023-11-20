@@ -40,12 +40,14 @@ def generate_with_function(model, tokenizer, input_text):
     B_INST, E_INST = "[INST]", "[/INST]"
 
     prompt = f"{B_FUNC}{functionList.strip()}{E_FUNC}{B_INST} {input_text.strip()} {E_INST}\n\n"
-    inputs = tokenizer([prompt], return_tensors="pt").to('cuda')
+    inputs = tokenizer(prompt, return_tensors="pt")
 
-    streamer = TextStreamer(tokenizer)
-    _ = model.generate(**inputs, streamer=streamer, max_new_tokens=500)
+    # Remove token_type_ids if present
+    if 'token_type_ids' in inputs:
+        del inputs['token_type_ids']
 
-    return streamer.text.strip()
+    outputs = model.generate(**inputs, max_new_tokens=500)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 def generate_without_function(model, tokenizer, input_text):
     inputs = tokenizer.encode(input_text, return_tensors="pt").to('cuda')
