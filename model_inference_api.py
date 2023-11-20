@@ -22,6 +22,9 @@ def load_model():
         trust_remote_code=True
     )
 
+    # Move model to GPU
+    model.to('cuda')
+
     return model, tokenizer
 
 def generate_with_function(model, tokenizer, input_text):
