@@ -6,7 +6,9 @@ model, tokenizer = load_model()
 
 @app.route("/predict_with_function", methods=["POST"])
 def predict_with_function():
-    input_text = request.json.get("input_text", None)
+    input_text = None
+    if request.json is not None:
+        input_text = request.json.get("input_text", None)
     if input_text is None:
         return jsonify({"error": "No input text provided"}), 400
 
@@ -15,7 +17,9 @@ def predict_with_function():
 
 @app.route("/predict_without_function", methods=["POST"])
 def predict_without_function():
-    input_text = request.json.get("input_text", None)
+    input_text = None
+    if request.json is not None:
+        input_text = request.json.get("input_text", None)
     if input_text is None:
         return jsonify({"error": "No input text provided"}), 400
 
