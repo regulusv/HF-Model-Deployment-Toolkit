@@ -1,19 +1,12 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextStreamer
 import json
 import torch
-# Use a pipeline as a high-level helper
-from transformers import pipeline
-
-# Load model directly
-tokenizer = AutoTokenizer.from_pretrained("Trelis/Llama-2-7b-chat-hf-function-calling-v2")
-model = AutoModelForCausalLM.from_pretrained("Trelis/Llama-2-7b-chat-hf-function-calling-v2")
 
 def load_model():
     # Load model and tokenizer with quantization for Llama 2
     model_name = "Trelis/Llama-2-7b-chat-hf-function-calling-v2"
     cache_dir = "/tmp/transformers_cache"
-    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir, use_fast=True) # will use the Rust fast tokenizer if available
-
+    tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir, use_fast=True)
 
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
@@ -25,7 +18,7 @@ def load_model():
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         quantization_config=bnb_config,
-        device_map='auto',  # Adjust this based on your setup
+        device_map='auto',  # Adjusts based on available hardware
         trust_remote_code=True
     )
 
@@ -45,16 +38,21 @@ def generate_with_function(model, tokenizer, input_text):
 
     B_FUNC, E_FUNC = "<FUNCTIONS>", "</FUNCTIONS>\n\n"
     B_INST, E_INST = "[INST]", "[/INST]"
-    
+
     prompt = f"{B_FUNC}{functionList.strip()}{E_FUNC}{B_INST} {input_text.strip()} {E_INST}\n\n"
-    inputs = tokenizer([prompt], return_tensors="pt")
+    inputs = tokenizer([prompt], return_tensors="pt").to('cuda')
 
     streamer = TextStreamer(tokenizer)
     _ = model.generate(**inputs, streamer=streamer, max_new_tokens=500)
-    
+
     return streamer.text.strip()
 
 def generate_without_function(model, tokenizer, input_text):
-    inputs = tokenizer.encode(input_text, return_tensors="pt")
+    inputs = tokenizer.encode(input_text, return_tensors="pt").to('cuda')
     outputs = model.generate(inputs, max_length=512)
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+# Example usage
+model, tokenizer = load_model()
+output = generate_with_function(model, tokenizer, "What is the capital of France?")
+print(output)
