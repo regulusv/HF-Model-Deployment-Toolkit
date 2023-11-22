@@ -1,0 +1,12 @@
+transformers==4.30
+flask
+requests 
+urllib3
+einops
+safetensors
+xformers
+torch
+requests
+accelerate
+bitsandbytes
+scipy
