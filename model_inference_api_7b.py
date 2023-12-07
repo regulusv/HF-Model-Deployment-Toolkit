@@ -2,6 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import json
 import torch
 
+
 def load_model():
     # Load model and tokenizer with quantization for Llama 2
     model_name = "Trelis/Llama-2-7b-chat-hf-function-calling-v2"
@@ -23,6 +24,7 @@ def load_model():
     )
 
     return model, tokenizer
+
 
 def generate_with_function(model, tokenizer, input_text):
     # Define function metadata
@@ -49,10 +51,12 @@ def generate_with_function(model, tokenizer, input_text):
     outputs = model.generate(**inputs, max_new_tokens=500)
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
+
 def generate_without_function(model, tokenizer, input_text):
     inputs = tokenizer.encode(input_text, return_tensors="pt").to('cuda')
     outputs = model.generate(inputs, max_length=512)
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
 
 # Example usage
 model, tokenizer = load_model()
