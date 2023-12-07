@@ -5,9 +5,9 @@ import json
 
 def load_model():
     model_name = "Trelis/Llama-2-13b-chat-hf-function-calling-v2"
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto",
-                                                 token="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")
-    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token="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")
+    auth_token = "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"  # 替换为你的实际令牌
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=auth_token)
+    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", use_auth_token=auth_token)
     return model, tokenizer
 
 
