@@ -8,7 +8,7 @@ if len(sys.argv) > 1:
     if model_version == "7b":
         from model_inference_api_7b import load_model, generate_with_function, generate_without_function
     elif model_version == "13b":
-        from model_inference_api_13b import load_model, generate_with_function, generate_without_function
+        from model_inference_api_13b import load_model, generate_with_function_call, generate_without_function
     else:
         raise ValueError("Invalid model version. Please specify '7b' or '13b'.")
 else:
