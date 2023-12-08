@@ -7,7 +7,11 @@ def load_model():
     model_name = "Trelis/Llama-2-13b-chat-hf-function-calling-v2"
     auth_token = "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"  # 替换为你的实际令牌
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=auth_token)
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", use_auth_token=auth_token)
+    model = AutoModelForCausalLM.from_pretrained(model_name,
+                                                 device_map="auto",
+                                                 use_auth_token=auth_token,
+                                                 load_in_8bit_fp32_cpu_offload=True,
+                                                 )
     return model, tokenizer
 
 
