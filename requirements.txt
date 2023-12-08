@@ -1,4 +1,4 @@
-transformers==4.30
+transformers
 flask
 requests 
 urllib3
