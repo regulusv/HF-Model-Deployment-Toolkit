@@ -16,7 +16,7 @@ def load_model():
         model_name,
         device_map="auto",
         use_auth_token=auth_token,
-        quantization_config=quantization_config,
+        quantization_config=quant_config,
     )
     return model, tokenizer
 
