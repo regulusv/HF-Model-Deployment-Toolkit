@@ -5,13 +5,19 @@ import json
 
 def load_model():
     model_name = "Trelis/Llama-2-13b-chat-hf-function-calling-v2"
-    auth_token = "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"  # 替换为你的实际令牌
+    auth_token = "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"
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=auth_token)
-    model = AutoModelForCausalLM.from_pretrained(model_name,
-                                                 device_map="auto",
-                                                 use_auth_token=auth_token,
-                                                 load_in_8bit_fp32_cpu_offload=True,
-                                                 )
+    quant_config = BitsAndBytesConfig(
+        load_in_4bit=True,  # Load model in 4-bit weights
+        bnb_4bit_quant_type="nf4",  # Quantization type for 4-bit weights (nf4 recommended)
+        bnb_4bit_compute_dtype=torch.bfloat16,  # Compute dtype for faster training
+    )
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        device_map="auto",
+        use_auth_token=auth_token,
+        config_kwargs={"quantization_config": quant_config},
+    )
     return model, tokenizer
 
 
