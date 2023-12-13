@@ -16,18 +16,11 @@ else:
 
 model, tokenizer = load_model()
 
-
-@app.route("/predict_with_function", methods=["POST"])
-def predict_with_function():
-    input_text = None
-    if request.json is not None:
-        input_text = request.json.get("input_text", None)
-    if input_text is None:
-        return jsonify({"error": "No input text provided"}), 400
-
-    response_text = generate_with_function(model, tokenizer, input_text)
-    return jsonify({"response_text": response_text})
-
+@app.route("/predict_with_function_call", methods=["POST"])
+def predict_with_function_call():
+    input_json = request.data.decode("utf-8")
+    output_json = generate_with_function_call(input_json, model, tokenizer)
+    return jsonify(output_json)
 
 @app.route("/predict_with_function_call", methods=["POST"])
 def predict_with_function_call():
